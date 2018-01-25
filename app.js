@@ -1,39 +1,70 @@
-//Basic required imporst for NodeJS
-var express=require("express");
-var bodyParser =require("body-parser");
+var express = require('express');
+var path = require('path');
+var favicon = require('serve-favicon');
+var logger = require('morgan');
+var cookieParser = require('cookie-parser');
+var bodyParser = require('body-parser');
 
-//Create an instance of express for our app and instantiate bodypaser
-var app=express();
+// var index = require('./routes/index');
+// var users = require('./routes/users');
+
+var app = express();
+
+// // view engine setup
+// app.set('views', path.join(__dirname, 'views'));
+// app.set('view engine', 'pug');
+
+// uncomment after placing your favicon in /public
+//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(logger('dev'));
 app.use(bodyParser.json());
-//GET CALL TO RETURN JSON THAT FORMATS NATURAL AND NNIX DATA
-app.get("/:dateVal",function(req,res,next){
-	//GETS THE REQUEST DATA FOR DATE
-	var dateVal=req.params.dateVal;
-	//Options for formatting in natual date representation
-	var dateFormattingOptions={
-		year:"numeric",
-		month:'long',
-		day:"numeric"
-	};
-	var unixDate;
-	var naturalDate;
-	if(isNaN(dateVal))
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// app.use('/', index);
+// app.use('/users', users);
+
+
+app.post('/submit',function(req,res,next){
+	var option={day:"numeric", month:"short", year:"numeric"};
+	if(isNaN(req.body.name))
 	{
-		console.log("if condition is satisfied");
-		naturalDate=new Date(dateVal);
-		naturalDate=naturalDate.toLocaleDateString("en-us",dateFormattingOptions);
-		unixDate=new Date(dateVal).getTime()/1000;
+		console.log("condition satisfied");
+		
+		var date=new Date(req.body.name);
+		if(date!="Invalid Date")
+		res.json({Natural_date:date.toLocaleDateString("en-US",option),
+					unix: date.getTime()/1000});
+		else
+			res.json({Natural_date:null,
+						unix:null});
 	}
-	else if(!isNaN(Number(dateVal))){
-		console.log("else condition is satisfied");
-		unixDate=dateVal;
-		naturalDate=new Date(dateVal*1000);
-		naturalDate=naturalDate.toLocaleDateString("en-us",dateFormattingOptions);
-
-	}
-	res.json({unix:unixDate,natural:naturalDate});
+	else
+		{
+			
+			var date=new Date(parseInt(req.body.name)*1000);
+			// res.send("invalid date");
+			// if(date!="Invalid Date")
+			res.json({Natural_date:date.toLocaleDateString("en-US",option),
+						unix: date.getTime()/1000});
+			// else
+			// 	res.send("invalid datea");
+		}
 });
 
-app.listen(3000,function(){
-	console.log("its working");
+// catch 404 and forward to error handler
+app.use(function(req, res, next) {
+  var err = new Error('Not Found');
+  err.status = 404;
+  next(err);
 });
+
+// error handler
+app.use(function(err, req, res, next) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
+});
+
+module.exports = app;
